@@ -1,0 +1,34 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: mall-order
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/mall?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# ===== Seata 客户端配置（重点）=====
+seata:
+  tx-service-group: mall-tx-group          # 事务组名（随便取，记住它）
+  service:
+    vgroup-mapping:
+      mall-tx-group: default               # 把这个事务组，映射到 default 集群
+  registry:
+    type: nacos                            # 通过 Nacos 去找 seata-server
+    nacos:
+      server-addr: 127.0.0.1:8848
+      application: seata-server            # seata-server 在 Nacos 里的服务名
+      group: SEATA_GROUP                   # 和 Seata Server 那边配的分组一致
+  config:
+    type: file                             # 配置中心用本地文件，省事

@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mall-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+    gateway:
+      routes:
+        - id: product-route
+          uri: lb://mall-product
+          predicates:
+            - Path=/product/**
+        - id: user-route
+          uri: lb://mall-user
+          predicates:
+            - Path=/user/**

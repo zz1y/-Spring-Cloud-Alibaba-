@@ -1,0 +1,21 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: mall-file
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# ===== MinIO 连接配置 =====
+minio:
+  endpoint: http://127.0.0.1:9000     # API 端口（9000 是给程序用的）
+  access-key: minioadmin              # 账号
+  secret-key: minioadmin              # 密码
+  bucket: mall-images                 # 桶名（放图片的文件夹）
