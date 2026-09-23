@@ -20,22 +20,29 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    // 发布商品（新增）
+    // 发布商品（新增，走 service 的「写时删除」）
     @PostMapping("/publish")
     public Result<Product> publish(@RequestBody Product product) {
-        productService.save(product);
+        productService.publishProduct(product);
         return Result.success(product);
     }
 
-    // 删除商品
+    // 删除商品（走 service 的「写时删除」）
     @DeleteMapping("/{id}")
     public Result<String> delete(@PathVariable Long id) {
-        productService.removeById(id);
+        productService.deleteProduct(id);
         return Result.success("删除成功");
     }
 
-
-
+    // 按 id 查询商品（走缓存，防穿透/击穿/雪崩）
+    @GetMapping("/{id}")
+    public Result<Product> getById(@PathVariable Long id) {
+        Product product = productService.getProductById(id);
+        if (product == null) {
+            return Result.error("商品不存在");
+        }
+        return Result.success(product);
+    }
 
     // 搜索商品（按名称模糊查询 + 分页）
     @GetMapping("/search")
@@ -60,6 +67,7 @@ public class ProductController {
     public Result<String> test() {
         return Result.success("商品服务启动成功");
     }
+
     // 查询所有商品（走缓存）
     @GetMapping("/list")
     @SentinelResource(value = "productList", blockHandler = "productListBlock")
@@ -72,20 +80,14 @@ public class ProductController {
     public Result<List<Product>> productListBlock(BlockException e) {
         return Result.error("请求太频繁，请稍后再试");
     }
-    // 扣库存（供订单服务调用，参与分布式事务）
+
+    // 扣库存（供订单服务调用，参与分布式事务，内部走「写时删除」）
     @PostMapping("/deductStock")
     public Result<String> deductStock(@RequestParam Long productId, @RequestParam Integer count) {
-        Product product = productService.getById(productId);
-        if (product == null) {
-            return Result.error("商品不存在");
+        String err = productService.deductStock(productId, count);
+        if (err != null) {
+            return Result.error(err);   // 商品不存在 / 库存不足 → 订单服务那边会回滚
         }
-        if (product.getStock() < count) {
-            return Result.error("库存不足");   // 库存不够 → 返回失败 → 订单那边回滚
-        }
-        product.setStock(product.getStock() - count);
-        productService.updateById(product);
         return Result.success("扣库存成功");
     }
-
-
 }
